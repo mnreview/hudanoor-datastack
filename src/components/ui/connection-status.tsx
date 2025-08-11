@@ -15,17 +15,12 @@ export function ConnectionStatus() {
   if (status.isConfigured) {
     return (
       <div className="mb-4">
-        <Alert className="border-green-200 bg-green-50">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
-            <div className="flex items-center justify-between">
-              <span>เชื่อมต่อ Google Sheets สำเร็จ - พร้อมใช้งาน</span>
-              <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
-                ออนไลน์
-              </Badge>
-            </div>
-          </AlertDescription>
-        </Alert>
+        <div className="flex items-center justify-center">
+          <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50 dark:bg-green-950 dark:text-green-400 dark:border-green-800">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            เชื่อมต่อ Google Sheets
+          </Badge>
+        </div>
       </div>
     );
   }

@@ -9,6 +9,7 @@ import { ChannelChart } from "@/components/dashboard/channel-chart";
 import { DashboardFilters } from "@/components/dashboard/dashboard-filters";
 import { TopCategoriesTable } from "@/components/dashboard/top-categories-table";
 import { SalesTarget } from "@/components/dashboard/sales-target";
+import { MonthlyBreakdownChart } from "@/components/dashboard/monthly-breakdown-chart";
 import { AddRecordForm } from "@/components/forms/add-record-form";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -386,6 +387,15 @@ const Index = () => {
 
         {/* Summary Cards */}
         <SummaryCards summary={summary} />
+
+        {/* Monthly Breakdown Chart */}
+        <div className="mb-6">
+          <MonthlyBreakdownChart 
+            incomeData={incomeData}
+            expenseData={expenseData}
+            filters={filters}
+          />
+        </div>
 
         {/* Sales Target */}
         <div className="mb-6">
