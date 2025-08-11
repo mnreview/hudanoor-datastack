@@ -100,6 +100,26 @@ npm run lint         # รัน ESLint
 ### Sheet "รายจ่าย"
 | ID | วันที่ | ช่องทาง | สาขา/แพลตฟอร์ม | รายการค่าใช้จ่าย | หมวดหมู่ค่าใช้จ่าย | ยอดเงิน | หมายเหตุ | สร้างเมื่อ | แก้ไขเมื่อ |
 
+## 🚀 Deployment
+
+### Deploy ด้วย Vercel (แนะนำ)
+1. ไปที่ [vercel.com](https://vercel.com)
+2. เชื่อมต่อกับ GitHub repository นี้
+3. ตั้งค่า Environment Variable: `VITE_GOOGLE_APPS_SCRIPT_URL`
+4. Deploy อัตโนมัติ!
+
+### Deploy ด้วย Netlify
+1. ไปที่ [netlify.com](https://netlify.com)
+2. เลือก "New site from Git"
+3. เชื่อมต่อ repository และตั้งค่า Environment Variables
+4. Deploy!
+
+### Deploy ด้วย GitHub Pages
+1. ไปที่ Settings > Pages ใน GitHub repository
+2. เลือก "GitHub Actions" เป็น source
+3. เพิ่ม Secret: `VITE_GOOGLE_APPS_SCRIPT_URL`
+4. Push code เพื่อ trigger deployment
+
 ## 🤝 Contributing
 
 1. Fork โปรเจค
