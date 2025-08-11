@@ -5,13 +5,13 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { DashboardSummary } from "@/types";
 import { formatCurrency } from "@/lib/utils";
-import { Target, Edit3 } from "lucide-react";
+import { Target, Edit3, TrendingUp, Award } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
 interface SalesTargetProps {
   summary: DashboardSummary;
@@ -45,17 +45,42 @@ export function SalesTarget({ summary, onTargetUpdate }: SalesTargetProps) {
     ? Math.min((summary.totalIncome / summary.salesTarget) * 100, 100)
     : 0;
 
+  const remaining = summary.salesTarget ? Math.max(summary.salesTarget - summary.totalIncome, 0) : 0;
+  const achieved = summary.totalIncome >= (summary.salesTarget || 0);
+
+  // Data for circular progress chart
+  const chartData = [
+    {
+      name: 'บรรลุแล้ว',
+      value: summary.totalIncome,
+      color: achieved ? '#10b981' : '#3b82f6'
+    },
+    {
+      name: 'เหลือ',
+      value: remaining,
+      color: '#f1f5f9'
+    }
+  ];
+
+  // Create gradient colors for the chart
+  const COLORS = {
+    achieved: achieved ? '#10b981' : '#3b82f6',
+    remaining: '#f1f5f9'
+  };
+
   return (
-    <Card className="card-elevated">
-      <CardHeader>
+    <Card className="card-elevated bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-950 border-blue-200 dark:border-blue-800">
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Target className="h-5 w-5 text-primary" />
+          <CardTitle className="text-lg flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <div className="p-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
+              <Target className="h-4 w-4" />
+            </div>
             เป้าหมายยอดขาย
           </CardTitle>
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="hover:bg-blue-100 dark:hover:bg-blue-900">
                 <Edit3 className="h-4 w-4" />
               </Button>
             </DialogTrigger>
@@ -89,36 +114,117 @@ export function SalesTarget({ summary, onTargetUpdate }: SalesTargetProps) {
       </CardHeader>
       <CardContent>
         {summary.salesTarget ? (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">ยอดขายปัจจุบัน</span>
-              <span className="font-semibold text-income">{formatCurrency(summary.totalIncome)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">เป้าหมาย</span>
-              <span className="font-semibold">{formatCurrency(summary.salesTarget)}</span>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">ความคืบหน้า</span>
-                <span className="font-semibold">{progressPercentage.toFixed(1)}%</span>
+          <div className="space-y-6">
+            {/* Circular Progress Chart */}
+            <div className="relative">
+              <div className="h-48 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={90}
+                      startAngle={90}
+                      endAngle={450}
+                      dataKey="value"
+                      strokeWidth={2}
+                      stroke="rgba(255,255,255,0.8)"
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.color}
+                          className="drop-shadow-sm"
+                        />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-              <Progress value={progressPercentage} className="h-3" />
+              
+              {/* Glow Effect */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400/20 to-indigo-400/20 blur-xl"></div>
+              
+              {/* Center Content */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+                <div className="text-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-full p-4 shadow-lg border border-white/20">
+                  {achieved ? (
+                    <Award className="h-8 w-8 text-green-500 mx-auto mb-2 animate-pulse" />
+                  ) : (
+                    <TrendingUp className="h-8 w-8 text-blue-500 mx-auto mb-2" />
+                  )}
+                  <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    {progressPercentage.toFixed(0)}%
+                  </div>
+                  <div className="text-xs text-muted-foreground font-medium">
+                    {achieved ? 'บรรลุแล้ว!' : 'ความคืบหน้า'}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="text-center text-sm">
-              {summary.totalIncome >= summary.salesTarget ? (
-                <span className="text-green-600 font-medium">🎉 บรรลุเป้าหมายแล้ว!</span>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gradient-to-br from-white/80 to-blue-50/80 dark:from-gray-800/80 dark:to-blue-950/80 backdrop-blur-sm rounded-xl p-4 border border-blue-200/50 dark:border-blue-700/50 shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 shadow-sm"></div>
+                  <span className="text-sm text-muted-foreground font-medium">ยอดขายปัจจุบัน</span>
+                </div>
+                <div className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  {formatCurrency(summary.totalIncome)}
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-br from-white/80 to-gray-50/80 dark:from-gray-800/80 dark:to-gray-900/80 backdrop-blur-sm rounded-xl p-4 border border-gray-200/50 dark:border-gray-700/50 shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-3 h-3 rounded-full bg-gradient-to-r from-gray-400 to-gray-500 shadow-sm"></div>
+                  <span className="text-sm text-muted-foreground font-medium">เป้าหมาย</span>
+                </div>
+                <div className="text-xl font-bold text-gray-700 dark:text-gray-300">
+                  {formatCurrency(summary.salesTarget)}
+                </div>
+              </div>
+            </div>
+
+            {/* Status Message */}
+            <div className="text-center">
+              {achieved ? (
+                <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-full inline-flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse">
+                  <Award className="h-5 w-5" />
+                  <span className="font-semibold">🎉 บรรลุเป้าหมายแล้ว!</span>
+                </div>
               ) : (
-                <span className="text-muted-foreground">
-                  เหลืออีก {formatCurrency(summary.salesTarget - summary.totalIncome)}
-                </span>
+                <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-6 py-3 rounded-full inline-flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <TrendingUp className="h-5 w-5" />
+                  <span className="font-semibold">
+                    เหลืออีก {formatCurrency(remaining)}
+                  </span>
+                </div>
               )}
             </div>
           </div>
         ) : (
-          <div className="text-center py-6">
-            <p className="text-muted-foreground mb-4">ยังไม่ได้ตั้งเป้าหมายยอดขาย</p>
-            <Button onClick={() => setIsOpen(true)} variant="outline">
+          <div className="text-center py-12">
+            <div className="relative mb-6">
+              <div className="bg-gradient-to-r from-blue-500 to-indigo-500 w-20 h-20 rounded-full flex items-center justify-center mx-auto shadow-xl">
+                <Target className="h-10 w-10 text-white" />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/30 to-indigo-400/30 rounded-full blur-xl"></div>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              ตั้งเป้าหมายยอดขาย
+            </h3>
+            <p className="text-muted-foreground mb-6">
+              กำหนดเป้าหมายเพื่อติดตามความคืบหน้าการขาย
+            </p>
+            <Button 
+              onClick={() => setIsOpen(true)} 
+              className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 shadow-lg hover:shadow-xl transition-all duration-300 px-8 py-3"
+              size="lg"
+            >
+              <Target className="h-5 w-5 mr-2" />
               ตั้งเป้าหมาย
             </Button>
           </div>
