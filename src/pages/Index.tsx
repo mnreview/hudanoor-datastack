@@ -18,8 +18,6 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useSheetsData } from "@/hooks/use-sheets-data";
-import { ConnectionStatus } from "@/components/ui/connection-status";
-import { SheetsInitializer } from "@/components/ui/sheets-initializer";
 import { Income, Expense, DashboardSummary, ChartData, CategoryData, ChannelData, FilterOptions, TopCategoryData } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 import { Plus, Search, TrendingUp, BarChart3, PieChart, Loader2, AlertCircle } from "lucide-react";
@@ -303,12 +301,9 @@ const Index = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
-                  ร้าน HUDANOOR
-                </h1>
-                <ConnectionStatus />
-              </div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
+                ร้าน HUDANOOR
+              </h1>
               <p className="text-muted-foreground">ระบบบันทึกรายรับ-รายจ่าย | เสื้อผ้าแฟชั่นมุสลิม</p>
             </div>
             
@@ -370,12 +365,6 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
-        {/* Connection Status */}
-        <ConnectionStatus />
-        
-        {/* Sheets Initializer - แสดงเฉพาะเมื่อเชื่อมต่อแล้ว */}
-        <SheetsInitializer />
-
         {/* Filters */}
         <DashboardFilters
           filters={filters}

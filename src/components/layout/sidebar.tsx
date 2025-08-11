@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { ConnectionStatus } from "@/components/ui/connection-status";
 import { 
   LayoutDashboard, 
   Plus, 
@@ -94,8 +95,12 @@ export function Sidebar({ currentPage, onPageChange, onAddRecord }: SidebarProps
 
       {/* Footer */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="text-xs text-muted-foreground text-center">
+        <div className="text-xs text-muted-foreground text-center mb-2">
           เสื้อผ้าแฟชั่นมุสลิม
+        </div>
+        {/* Connection Status in Sidebar */}
+        <div className="flex justify-center">
+          <ConnectionStatus />
         </div>
       </div>
     </div>
