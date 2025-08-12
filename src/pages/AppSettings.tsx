@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,12 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "@/hooks/use-toast";
 import { 
   Settings as SettingsIcon, 
   Store, 
   Palette, 
   FileText, 
-  Save
+  Save,
+  Check,
+  RotateCcw
 } from "lucide-react";
 
 interface AppSettingsData {
@@ -44,9 +47,72 @@ const defaultSettings: AppSettingsData = {
 
 export function AppSettings() {
   const [settings, setSettings] = useState<AppSettingsData>(defaultSettings);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
 
-  const handleSaveSettings = () => {
-    console.log("Saving settings:", settings);
+  // โหลดการตั้งค่าจาก localStorage เมื่อเริ่มต้น
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('hudanoor-settings');
+    if (savedSettings) {
+      try {
+        const parsedSettings = JSON.parse(savedSettings);
+        setSettings({ ...defaultSettings, ...parsedSettings });
+        
+        // แสดงเวลาบันทึกล่าสุด
+        if (parsedSettings.updatedAt) {
+          const lastSavedDate = new Date(parsedSettings.updatedAt);
+          setLastSaved(lastSavedDate.toLocaleString('th-TH'));
+        }
+      } catch (error) {
+        console.error("Error loading settings:", error);
+      }
+    }
+  }, []);
+
+  const handleSaveSettings = async () => {
+    setIsSaving(true);
+    
+    try {
+      // จำลองการบันทึกข้อมูล (ในอนาคตจะเชื่อมต่อกับ API หรือ localStorage)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // บันทึกลง localStorage สำหรับตอนนี้
+      const settingsWithTimestamp = {
+        ...settings,
+        updatedAt: new Date().toISOString()
+      };
+      localStorage.setItem('hudanoor-settings', JSON.stringify(settingsWithTimestamp));
+      setLastSaved(new Date().toLocaleString('th-TH'));
+      
+      toast({
+        title: "บันทึกการตั้งค่าสำเร็จ",
+        description: "การตั้งค่าของคุณได้รับการบันทึกแล้ว",
+        duration: 3000,
+      });
+      
+      console.log("Settings saved:", settingsWithTimestamp);
+    } catch (error) {
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถบันทึกการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง",
+        variant: "destructive",
+        duration: 3000,
+      });
+      console.error("Error saving settings:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleResetSettings = () => {
+    setSettings(defaultSettings);
+    setLastSaved(null);
+    localStorage.removeItem('hudanoor-settings');
+    toast({
+      title: "รีเซ็ตการตั้งค่าสำเร็จ",
+      description: "การตั้งค่าได้กลับไปเป็นค่าเริ่มต้นแล้ว",
+      duration: 3000,
+    });
   };
 
   return (
@@ -56,15 +122,46 @@ export function AppSettings() {
           <h1 className="text-3xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
             การตั้งค่า
           </h1>
-          <p className="text-muted-foreground mt-1">
-            ปรับแต่งระบบให้เหมาะสมกับการใช้งานของคุณ
-          </p>
+          <div>
+            <p className="text-muted-foreground mt-1">
+              ปรับแต่งระบบให้เหมาะสมกับการใช้งานของคุณ
+            </p>
+            {lastSaved && (
+              <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                <Check className="h-3 w-3 inline mr-1" />
+                บันทึกล่าสุด: {lastSaved}
+              </p>
+            )}
+          </div>
         </div>
 
-        <Button onClick={handleSaveSettings} className="bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600">
-          <Save className="h-4 w-4 mr-2" />
-          บันทึกการตั้งค่า
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleResetSettings}
+            variant="outline"
+            disabled={isSaving}
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            รีเซ็ต
+          </Button>
+          <Button 
+            onClick={handleSaveSettings} 
+            disabled={isSaving}
+            className="bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 disabled:opacity-50"
+          >
+            {isSaving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                กำลังบันทึก...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                บันทึกการตั้งค่า
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="store" className="space-y-4">
