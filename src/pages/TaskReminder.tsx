@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,46 +12,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { formatDate, cn } from "@/lib/utils";
-import { CalendarIcon, Plus, CheckSquare, Clock, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { CalendarIcon, Plus, CheckSquare } from "lucide-react";
 import { format, isToday, isTomorrow, isPast, differenceInDays } from "date-fns";
 import { th } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
-
-interface TaskReminder {
-  id: string;
-  title: string;
-  type: 'income' | 'expense';
-  amount: number;
-  note: string;
-  dueDate: Date;
-  completed: boolean;
-  createdAt: Date;
-}
+import { useTasks } from "@/hooks/use-tasks";
+import { TaskReminder as TaskReminderType } from "@/types/task";
 
 export function TaskReminder() {
-  const [tasks, setTasks] = useState<TaskReminder[]>([
-    {
-      id: '1',
-      title: 'จ่ายค่าเช่าร้าน',
-      type: 'expense',
-      amount: 15000,
-      note: 'ค่าเช่าประจำเดือน',
-      dueDate: new Date(2025, 1, 15),
-      completed: false,
-      createdAt: new Date(),
-    },
-    {
-      id: '2',
-      title: 'รับเงินจากลูกค้า A',
-      type: 'income',
-      amount: 5000,
-      note: 'ชำระค่าสินค้าล่วงหน้า',
-      dueDate: new Date(2025, 1, 20),
-      completed: false,
-      createdAt: new Date(),
-    },
-  ]);
+  const { 
+    tasks, 
+    isLoading, 
+    addTask, 
+    updateTask, 
+    deleteTask,
+    isAddingTask,
+    isUpdatingTask,
+    isDeletingTask
+  } = useTasks();
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newTask, setNewTask] = useState({
@@ -72,18 +51,15 @@ export function TaskReminder() {
       return;
     }
 
-    const task: TaskReminder = {
-      id: Date.now().toString(),
+    addTask({
       title: newTask.title,
       type: newTask.type,
       amount: newTask.amount,
       note: newTask.note,
       dueDate: newTask.dueDate,
       completed: false,
-      createdAt: new Date(),
-    };
+    });
 
-    setTasks(prev => [...prev, task]);
     setNewTask({
       title: '',
       type: 'expense',
@@ -92,27 +68,17 @@ export function TaskReminder() {
       dueDate: new Date(),
     });
     setIsAddDialogOpen(false);
-
-    toast({
-      title: "เพิ่ม Task สำเร็จ",
-      description: `เพิ่ม ${task.title} แล้ว`
-    });
   };
 
   const handleToggleComplete = (taskId: string) => {
-    setTasks(prev => prev.map(task => 
-      task.id === taskId 
-        ? { ...task, completed: !task.completed }
-        : task
-    ));
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      updateTask({ taskId, updates: { completed: !task.completed } });
+    }
   };
 
   const handleDeleteTask = (taskId: string) => {
-    setTasks(prev => prev.filter(task => task.id !== taskId));
-    toast({
-      title: "ลบ Task สำเร็จ",
-      description: "ลบรายการแล้ว"
-    });
+    deleteTask(taskId);
   };
 
   // Sort tasks by due date (nearest first) and completion status
@@ -123,7 +89,7 @@ export function TaskReminder() {
     return a.dueDate.getTime() - b.dueDate.getTime();
   });
 
-  const getTaskStatus = (task: TaskReminder) => {
+  const getTaskStatus = (task: TaskReminderType) => {
     if (task.completed) return { label: 'เสร็จแล้ว', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' };
     if (isPast(task.dueDate) && !isToday(task.dueDate)) return { label: 'เกินกำหนด', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' };
     if (isToday(task.dueDate)) return { label: 'วันนี้', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' };
@@ -233,8 +199,8 @@ export function TaskReminder() {
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                   ยกเลิก
                 </Button>
-                <Button onClick={handleAddTask}>
-                  เพิ่ม Task
+                <Button onClick={handleAddTask} disabled={isAddingTask}>
+                  {isAddingTask ? 'กำลังเพิ่ม...' : 'เพิ่ม Task'}
                 </Button>
               </div>
             </div>
@@ -244,7 +210,14 @@ export function TaskReminder() {
 
       {/* Tasks List */}
       <div className="space-y-4">
-        {sortedTasks.length === 0 ? (
+        {isLoading ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4"></div>
+              <p className="text-muted-foreground">กำลังโหลดข้อมูล...</p>
+            </CardContent>
+          </Card>
+        ) : sortedTasks.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <CheckSquare className="h-12 w-12 text-muted-foreground mb-4" />
@@ -273,6 +246,7 @@ export function TaskReminder() {
                     <Checkbox
                       checked={task.completed}
                       onCheckedChange={() => handleToggleComplete(task.id)}
+                      disabled={isUpdatingTask}
                       className="mt-1"
                     />
                     
@@ -308,9 +282,10 @@ export function TaskReminder() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteTask(task.id)}
+                            disabled={isDeletingTask}
                             className="text-red-500 hover:text-red-700 hover:bg-red-50"
                           >
-                            ลบ
+                            {isDeletingTask ? 'กำลังลบ...' : 'ลบ'}
                           </Button>
                         </div>
                       </div>

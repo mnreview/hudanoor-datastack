@@ -8,6 +8,7 @@ var SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE';
 // ชื่อ Sheet
 var INCOME_SHEET = 'รายรับ';
 var EXPENSE_SHEET = 'รายจ่าย';
+var TASK_SHEET = 'TaskReminder';
 
 // Headers สำหรับ Income Sheet
 var INCOME_HEADERS = [
@@ -19,6 +20,11 @@ var INCOME_HEADERS = [
 var EXPENSE_HEADERS = [
   'ID', 'วันที่', 'ช่องทาง', 'สาขา/แพลตฟอร์ม', 'รายการค่าใช้จ่าย', 
   'หมวดหมู่ค่าใช้จ่าย', 'ยอดเงิน', 'หมายเหตุ', 'สร้างเมื่อ', 'แก้ไขเมื่อ'
+];
+
+// Headers สำหรับ Task Reminder Sheet
+var TASK_HEADERS = [
+  'ID', 'รายการ', 'ประเภท', 'จำนวนเงิน', 'หมายเหตุ', 'กำหนดวัน', 'สถานะ', 'สร้างเมื่อ', 'แก้ไขเมื่อ'
 ];
 
 // ฟังก์ชันหลักสำหรับ HTTP GET
@@ -45,6 +51,21 @@ function doGet(e) {
         break;
       case 'initializeSheets':
         result = initializeSheets(callback);
+        break;
+      case 'getTasks':
+        result = getTasksData(callback);
+        break;
+      case 'addTask':
+        var taskData = JSON.parse(e.parameter.data);
+        result = addTaskRecord(taskData, callback);
+        break;
+      case 'updateTask':
+        var updateData = JSON.parse(e.parameter.data);
+        result = updateTaskRecord(updateData, callback);
+        break;
+      case 'deleteTask':
+        var taskId = e.parameter.taskId;
+        result = deleteTaskRecord(taskId, callback);
         break;
       default:
         var errorResult = { error: 'Invalid action' };
@@ -287,7 +308,170 @@ function initializeSheets(callback) {
   expenseRange.setFontWeight('bold');
   expenseRange.setBackground('#f0f0f0');
   
+  // สร้างหรือตั้งค่า Task Sheet
+  var taskSheet = spreadsheet.getSheetByName(TASK_SHEET);
+  if (!taskSheet) {
+    taskSheet = spreadsheet.insertSheet(TASK_SHEET);
+  }
+  
+  // ตั้งค่า Headers สำหรับ Task Sheet
+  var taskRange = taskSheet.getRange(1, 1, 1, TASK_HEADERS.length);
+  taskRange.setValues([TASK_HEADERS]);
+  taskRange.setFontWeight('bold');
+  taskRange.setBackground('#f0f0f0');
+  
   var result = { success: true, message: 'Sheets initialized successfully' };
+  
+  if (callback) {
+    return ContentService
+      .createTextOutput(callback + '(' + JSON.stringify(result) + ');')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  } else {
+    return ContentService
+      .createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// อ่านข้อมูล Tasks
+function getTasksData(callback) {
+  var spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = spreadsheet.getSheetByName(TASK_SHEET);
+  
+  if (!sheet) {
+    throw new Error('Sheet "' + TASK_SHEET + '" not found');
+  }
+  
+  var values = sheet.getDataRange().getValues();
+  var result = { values: values };
+  
+  if (callback) {
+    return ContentService
+      .createTextOutput(callback + '(' + JSON.stringify(result) + ');')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  } else {
+    return ContentService
+      .createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// เพิ่ม Task ใหม่
+function addTaskRecord(taskData, callback) {
+  var spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = spreadsheet.getSheetByName(TASK_SHEET);
+  
+  if (!sheet) {
+    throw new Error('Sheet "' + TASK_SHEET + '" not found');
+  }
+  
+  var id = 'task_' + Date.now();
+  var now = new Date().toISOString();
+  
+  var rowData = [
+    id,
+    taskData.title,
+    taskData.type,
+    taskData.amount,
+    taskData.note || '',
+    taskData.dueDate,
+    taskData.completed ? 'เสร็จแล้ว' : 'รอดำเนินการ',
+    now,
+    now
+  ];
+  
+  sheet.appendRow(rowData);
+  
+  var result = { success: true, id: id };
+  
+  if (callback) {
+    return ContentService
+      .createTextOutput(callback + '(' + JSON.stringify(result) + ');')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  } else {
+    return ContentService
+      .createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// อัปเดต Task (สำหรับเปลี่ยนสถานะหรือแก้ไข)
+function updateTaskRecord(updateData, callback) {
+  var spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = spreadsheet.getSheetByName(TASK_SHEET);
+  
+  if (!sheet) {
+    throw new Error('Sheet "' + TASK_SHEET + '" not found');
+  }
+  
+  var values = sheet.getDataRange().getValues();
+  var rowIndex = -1;
+  
+  // หา row ที่ต้องอัปเดต
+  for (var i = 1; i < values.length; i++) {
+    if (values[i][0] === updateData.id) {
+      rowIndex = i + 1; // +1 เพราะ getRange เริ่มจาก 1
+      break;
+    }
+  }
+  
+  if (rowIndex === -1) {
+    throw new Error('Task not found');
+  }
+  
+  var now = new Date().toISOString();
+  
+  // อัปเดตข้อมูล
+  if (updateData.title !== undefined) sheet.getRange(rowIndex, 2).setValue(updateData.title);
+  if (updateData.type !== undefined) sheet.getRange(rowIndex, 3).setValue(updateData.type);
+  if (updateData.amount !== undefined) sheet.getRange(rowIndex, 4).setValue(updateData.amount);
+  if (updateData.note !== undefined) sheet.getRange(rowIndex, 5).setValue(updateData.note);
+  if (updateData.dueDate !== undefined) sheet.getRange(rowIndex, 6).setValue(updateData.dueDate);
+  if (updateData.completed !== undefined) {
+    sheet.getRange(rowIndex, 7).setValue(updateData.completed ? 'เสร็จแล้ว' : 'รอดำเนินการ');
+  }
+  sheet.getRange(rowIndex, 9).setValue(now); // แก้ไขเมื่อ
+  
+  var result = { success: true, id: updateData.id };
+  
+  if (callback) {
+    return ContentService
+      .createTextOutput(callback + '(' + JSON.stringify(result) + ');')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  } else {
+    return ContentService
+      .createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// ลบ Task
+function deleteTaskRecord(taskId, callback) {
+  var spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = spreadsheet.getSheetByName(TASK_SHEET);
+  
+  if (!sheet) {
+    throw new Error('Sheet "' + TASK_SHEET + '" not found');
+  }
+  
+  var values = sheet.getDataRange().getValues();
+  var rowIndex = -1;
+  
+  // หา row ที่ต้องลบ
+  for (var i = 1; i < values.length; i++) {
+    if (values[i][0] === taskId) {
+      rowIndex = i + 1; // +1 เพราะ deleteRow เริ่มจาก 1
+      break;
+    }
+  }
+  
+  if (rowIndex === -1) {
+    throw new Error('Task not found');
+  }
+  
+  sheet.deleteRow(rowIndex);
+  
+  var result = { success: true, id: taskId };
   
   if (callback) {
     return ContentService

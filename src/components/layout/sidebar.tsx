@@ -10,7 +10,10 @@ import {
   Plus, 
   CheckSquare, 
   Menu,
-  X
+  X,
+  Users,
+  FileText,
+  Settings
 } from "lucide-react";
 
 interface SidebarProps {
@@ -34,6 +37,21 @@ const menuItems = [
     id: 'task-reminder',
     label: 'Task Reminder',
     icon: CheckSquare,
+  },
+  {
+    id: 'employees',
+    label: 'จัดการพนักงาน',
+    icon: Users,
+  },
+  {
+    id: 'update-logs',
+    label: 'Update Logs',
+    icon: FileText,
+  },
+  {
+    id: 'settings',
+    label: 'การตั้งค่า',
+    icon: Settings,
   },
 ];
 

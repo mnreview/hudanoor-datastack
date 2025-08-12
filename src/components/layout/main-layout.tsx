@@ -5,6 +5,9 @@ import { Sidebar } from "./sidebar";
 import { SheetsInitializer } from "@/components/ui/sheets-initializer";
 import Index from "@/pages/Index";
 import { TaskReminder } from "@/pages/TaskReminder";
+import { EmployeeManagement } from "@/pages/EmployeeManagement";
+import { UpdateLogs } from "@/pages/UpdateLogs";
+import { AppSettings } from "@/pages/AppSettings";
 import { AddRecordForm } from "@/components/forms/add-record-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useSheetsData } from "@/hooks/use-sheets-data";
@@ -40,6 +43,12 @@ export function MainLayout() {
         return <Index />;
       case 'task-reminder':
         return <TaskReminder />;
+      case 'employees':
+        return <EmployeeManagement />;
+      case 'update-logs':
+        return <UpdateLogs />;
+      case 'settings':
+        return <AppSettings />;
       default:
         return <Index />;
     }

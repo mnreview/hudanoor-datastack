@@ -26,7 +26,7 @@ interface MonthlyData {
 }
 
 export function MonthlyBreakdownChart({ incomeData, expenseData, filters }: MonthlyBreakdownChartProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [visibleLines, setVisibleLines] = useState({
     income: true,
     expense: true,
@@ -57,10 +57,27 @@ export function MonthlyBreakdownChart({ incomeData, expenseData, filters }: Mont
     return true;
   });
 
-  // Generate monthly data for the last 6 months
-  const endDate = new Date();
-  const startDate = subMonths(endDate, 5);
-  const months = eachMonthOfInterval({ start: startDate, end: endDate });
+  // Generate monthly data based on filtered data range
+  const allDates = [
+    ...filteredIncomeData.map(item => parseISO(item.date)),
+    ...filteredExpenseData.map(item => parseISO(item.date))
+  ];
+  
+  let months: Date[];
+  
+  if (allDates.length === 0) {
+    // If no data, show current month
+    const currentMonth = new Date();
+    months = [startOfMonth(currentMonth)];
+  } else {
+    // Get date range from filtered data
+    const minDate = new Date(Math.min(...allDates.map(d => d.getTime())));
+    const maxDate = new Date(Math.max(...allDates.map(d => d.getTime())));
+    
+    const startDate = startOfMonth(minDate);
+    const endDate = endOfMonth(maxDate);
+    months = eachMonthOfInterval({ start: startDate, end: endDate });
+  }
 
   const monthlyData: MonthlyData[] = months.map(month => {
     const monthStart = startOfMonth(month);
@@ -129,7 +146,7 @@ export function MonthlyBreakdownChart({ incomeData, expenseData, filters }: Mont
             <div className="p-2 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 text-white">
               <Calendar className="h-4 w-4" />
             </div>
-            แนวโน้มรายเดือน (6 เดือนล่าสุด)
+            แนวโน้มรายเดือน
           </CardTitle>
           <Button
             variant="ghost"

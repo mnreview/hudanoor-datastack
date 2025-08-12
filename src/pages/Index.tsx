@@ -391,6 +391,7 @@ const Index = () => {
           <SalesTarget 
             summary={summary} 
             onTargetUpdate={setSalesTarget}
+            filters={filters}
           />
         </div>
 

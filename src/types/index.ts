@@ -74,3 +74,7 @@ export interface TopCategoryData {
   count: number;
   percentage: number;
 }
+
+// Re-export types from other files
+export * from './employee';
+export * from './settings';

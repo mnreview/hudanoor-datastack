@@ -16,9 +16,10 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 interface SalesTargetProps {
   summary: DashboardSummary;
   onTargetUpdate: (target: number) => void;
+  filters: any; // FilterOptions type
 }
 
-export function SalesTarget({ summary, onTargetUpdate }: SalesTargetProps) {
+export function SalesTarget({ summary, onTargetUpdate, filters }: SalesTargetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [targetInput, setTargetInput] = useState(summary.salesTarget?.toString() || "");
 
@@ -41,12 +42,37 @@ export function SalesTarget({ summary, onTargetUpdate }: SalesTargetProps) {
     });
   };
 
-  const progressPercentage = summary.salesTarget 
-    ? Math.min((summary.totalIncome / summary.salesTarget) * 100, 100)
+  // Calculate adjusted target based on date range
+  const calculateAdjustedTarget = () => {
+    if (!summary.salesTarget) return 0;
+    
+    // If no date filters, use monthly target as is
+    if (!filters.dateFrom && !filters.dateTo) {
+      return summary.salesTarget;
+    }
+    
+    // Calculate days in the filtered period
+    const startDate = filters.dateFrom ? new Date(filters.dateFrom) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const endDate = filters.dateTo ? new Date(filters.dateTo) : new Date();
+    
+    const timeDiff = endDate.getTime() - startDate.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1; // +1 to include both start and end dates
+    
+    // Calculate daily average target (monthly target / 30 days)
+    const dailyTarget = summary.salesTarget / 30;
+    
+    // Return adjusted target for the filtered period
+    return dailyTarget * daysDiff;
+  };
+
+  const adjustedTarget = calculateAdjustedTarget();
+  
+  const progressPercentage = adjustedTarget 
+    ? Math.min((summary.totalIncome / adjustedTarget) * 100, 100)
     : 0;
 
-  const remaining = summary.salesTarget ? Math.max(summary.salesTarget - summary.totalIncome, 0) : 0;
-  const achieved = summary.totalIncome >= (summary.salesTarget || 0);
+  const remaining = adjustedTarget ? Math.max(adjustedTarget - summary.totalIncome, 0) : 0;
+  const achieved = summary.totalIncome >= adjustedTarget;
 
   // Data for circular progress chart
   const chartData = [
@@ -57,7 +83,7 @@ export function SalesTarget({ summary, onTargetUpdate }: SalesTargetProps) {
     },
     {
       name: 'เหลือ',
-      value: remaining,
+      value: Math.max(remaining, 0),
       color: '#f1f5f9'
     }
   ];
@@ -86,20 +112,23 @@ export function SalesTarget({ summary, onTargetUpdate }: SalesTargetProps) {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>ตั้งเป้าหมายยอดขาย</DialogTitle>
+                <DialogTitle>ตั้งเป้าหมายยอดขายรายเดือน</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="target">เป้าหมายยอดขาย (บาท)</Label>
+                  <Label htmlFor="target">เป้าหมายยอดขายรายเดือน (บาท)</Label>
                   <Input
                     id="target"
                     type="number"
                     value={targetInput}
                     onChange={(e) => setTargetInput(e.target.value)}
-                    placeholder="ใส่เป้าหมายยอดขาย"
+                    placeholder="ใส่เป้าหมายยอดขายรายเดือน"
                     min="0"
                     step="0.01"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    เป้าหมายจะถูกปรับตามช่วงเวลาที่เลือกในตัวกรอง
+                  </p>
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
@@ -180,11 +209,18 @@ export function SalesTarget({ summary, onTargetUpdate }: SalesTargetProps) {
               <div className="bg-gradient-to-br from-white/80 to-gray-50/80 dark:from-gray-800/80 dark:to-gray-900/80 backdrop-blur-sm rounded-xl p-4 border border-gray-200/50 dark:border-gray-700/50 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-3 h-3 rounded-full bg-gradient-to-r from-gray-400 to-gray-500 shadow-sm"></div>
-                  <span className="text-sm text-muted-foreground font-medium">เป้าหมาย</span>
+                  <span className="text-sm text-muted-foreground font-medium">
+                    {filters.dateFrom || filters.dateTo ? 'เป้าหมายช่วงนี้' : 'เป้าหมายรายเดือน'}
+                  </span>
                 </div>
                 <div className="text-xl font-bold text-gray-700 dark:text-gray-300">
-                  {formatCurrency(summary.salesTarget)}
+                  {formatCurrency(adjustedTarget)}
                 </div>
+                {(filters.dateFrom || filters.dateTo) && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    เป้าหมายรายเดือน: {formatCurrency(summary.salesTarget)}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -214,10 +250,11 @@ export function SalesTarget({ summary, onTargetUpdate }: SalesTargetProps) {
               <div className="absolute inset-0 bg-gradient-to-r from-blue-400/30 to-indigo-400/30 rounded-full blur-xl"></div>
             </div>
             <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              ตั้งเป้าหมายยอดขาย
+              ตั้งเป้าหมายยอดขายรายเดือน
             </h3>
             <p className="text-muted-foreground mb-6">
-              กำหนดเป้าหมายเพื่อติดตามความคืบหน้าการขาย
+              กำหนดเป้าหมายรายเดือนเพื่อติดตามความคืบหน้าการขาย<br/>
+              เป้าหมายจะถูกปรับตามช่วงเวลาที่เลือกในตัวกรอง
             </p>
             <Button 
               onClick={() => setIsOpen(true)} 
