@@ -78,3 +78,4 @@ export interface TopCategoryData {
 // Re-export types from other files
 export * from './employee';
 export * from './settings';
+export * from './task';

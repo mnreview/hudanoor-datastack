@@ -19,6 +19,7 @@ import { th } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
 import { useTasks } from "@/hooks/use-tasks";
 import { TaskReminder as TaskReminderType } from "@/types/task";
+import { testConnection } from "@/lib/task-api";
 
 export function TaskReminder() {
   const { 
@@ -81,6 +82,30 @@ export function TaskReminder() {
     deleteTask(taskId);
   };
 
+  const handleTestConnection = async () => {
+    try {
+      const isConnected = await testConnection();
+      if (isConnected) {
+        toast({
+          title: "เชื่อมต่อสำเร็จ",
+          description: "สามารถเชื่อมต่อกับ Google Apps Script ได้",
+        });
+      } else {
+        toast({
+          title: "เชื่อมต่อไม่สำเร็จ",
+          description: "ไม่สามารถเชื่อมต่อกับ Google Apps Script ได้",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถทดสอบการเชื่อมต่อได้",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Sort tasks by due date (nearest first) and completion status
   const sortedTasks = [...tasks].sort((a, b) => {
     if (a.completed !== b.completed) {
@@ -112,13 +137,21 @@ export function TaskReminder() {
           <p className="text-muted-foreground">จัดการรายการที่ต้องทำในอนาคต</p>
         </div>
 
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
-              <Plus className="h-4 w-4 mr-2" />
-              เพิ่ม Task
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleTestConnection}
+            variant="outline"
+            size="sm"
+          >
+            ทดสอบการเชื่อมต่อ
+          </Button>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
+                <Plus className="h-4 w-4 mr-2" />
+                เพิ่ม Task
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>เพิ่ม Task ใหม่</DialogTitle>
@@ -206,6 +239,7 @@ export function TaskReminder() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Tasks List */}

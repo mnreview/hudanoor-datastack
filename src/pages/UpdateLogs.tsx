@@ -26,6 +26,46 @@ import {
 
 const mockUpdateLogs: UpdateLog[] = [
   {
+    id: "03",
+    version: "1.2.9",
+    date: "2024-12-08",
+    title: "แก้ไขปัญหา JSX syntax error ในหน้า Task Reminder",
+    description: "แก้ไขปัญหา JSX element ที่ไม่มี closing tag ในหน้า Task Reminder ซึ่งทำให้เกิด compilation error และไม่สามารถใช้งานระบบได้",
+    type: "bugfix",
+    isImportant: false,
+    createdAt: "2024-12-08T23:00:00Z"
+  },
+  {
+    id: "02",
+    version: "1.2.8",
+    date: "2024-12-08",
+    title: "เพิ่มฟังก์ชันทดสอบการเชื่อมต่อใน Task Reminder",
+    description: "เพิ่มฟังก์ชัน handleTestConnection() ในหน้า Task Reminder เพื่อให้ผู้ใช้สามารถทดสอบการเชื่อมต่อกับ Google Apps Script ได้โดยตรง พร้อมแสดงผลการทดสอบผ่าน toast notification",
+    type: "improvement",
+    isImportant: false,
+    createdAt: "2024-12-08T22:00:00Z"
+  },
+  {
+    id: "01",
+    version: "1.2.7",
+    date: "2024-12-08",
+    title: "เพิ่มระบบ Debug และ Connection Testing สำหรับ Task Reminder",
+    description: "เพิ่มฟังก์ชัน testConnection() และ console logging ใน task-api.ts เพื่อช่วยในการ debug และตรวจสอบการเชื่อมต่อกับ Google Apps Script ในระบบ Task Reminder",
+    type: "improvement",
+    isImportant: false,
+    createdAt: "2024-12-08T21:00:00Z"
+  },
+  {
+    id: "00",
+    version: "1.2.6",
+    date: "2024-12-08",
+    title: "แก้ไขปัญหา TypeScript imports ในระบบ Task Reminder",
+    description: "แก้ไขปัญหาการ import types ในไฟล์ task-api.ts และเพิ่ม TaskReminder type export ในไฟล์ types หลัก เพื่อให้ระบบ Task Reminder ทำงานได้อย่างถูกต้อง",
+    type: "bugfix",
+    isImportant: false,
+    createdAt: "2024-12-08T20:00:00Z"
+  },
+  {
     id: "0",
     version: "1.2.5",
     date: "2024-12-08",

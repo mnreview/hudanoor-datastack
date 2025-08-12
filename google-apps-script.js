@@ -415,11 +415,15 @@ function getTasksData(callback) {
 
 // เพิ่ม Task ใหม่
 function addTaskRecord(taskData, callback) {
+  console.log('addTaskRecord called with:', taskData);
+  
   var spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = spreadsheet.getSheetByName(TASK_SHEET);
   
   if (!sheet) {
-    throw new Error('Sheet "' + TASK_SHEET + '" not found');
+    console.log('Creating new TaskReminder sheet');
+    sheet = spreadsheet.insertSheet(TASK_SHEET);
+    sheet.getRange(1, 1, 1, TASK_HEADERS.length).setValues([TASK_HEADERS]);
   }
   
   var id = 'task_' + Date.now();
@@ -437,7 +441,9 @@ function addTaskRecord(taskData, callback) {
     now
   ];
   
+  console.log('Adding row data:', rowData);
   sheet.appendRow(rowData);
+  console.log('Task added successfully to sheet');
   
   var result = { success: true, id: id };
   

@@ -1,4 +1,4 @@
-import { TaskReminder } from '@/types/task';
+import { TaskReminder } from '@/types';
 
 // Google Apps Script Web App URL
 const WEB_APP_URL = import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL || '';
@@ -62,15 +62,41 @@ const parseTaskData = (rows: any[][]): TaskReminder[] => {
   }));
 };
 
+// Test connection to Google Apps Script
+export const testConnection = async (): Promise<boolean> => {
+  if (!isGoogleAppsScriptConfigured()) {
+    console.error('Google Apps Script Web App URL not configured');
+    return false;
+  }
+
+  try {
+    console.log('Testing connection to:', WEB_APP_URL);
+    const data = await fetchWithJsonp(`${WEB_APP_URL}?action=getTasks`);
+    console.log('Connection test successful:', data);
+    return true;
+  } catch (error) {
+    console.error('Connection test failed:', error);
+    return false;
+  }
+};
+
 // Read tasks data from Google Apps Script using JSONP
 export const getTasksData = async (): Promise<TaskReminder[]> => {
+  console.log('getTasksData called');
+  console.log('WEB_APP_URL configured:', isGoogleAppsScriptConfigured());
+  
   if (!isGoogleAppsScriptConfigured()) {
+    console.error('Google Apps Script Web App URL not configured');
     throw new Error('Google Apps Script Web App URL ยังไม่ได้ตั้งค่า');
   }
 
   try {
+    console.log('Fetching tasks from:', `${WEB_APP_URL}?action=getTasks`);
     const data = await fetchWithJsonp(`${WEB_APP_URL}?action=getTasks`);
-    return parseTaskData(data.values || []);
+    console.log('Raw data from Google Apps Script:', data);
+    const tasks = parseTaskData(data.values || []);
+    console.log('Parsed tasks:', tasks);
+    return tasks;
   } catch (error) {
     console.error('Error fetching tasks data:', error);
     throw error;
@@ -79,7 +105,11 @@ export const getTasksData = async (): Promise<TaskReminder[]> => {
 
 // Add new task record to Google Sheets
 export const addTaskRecord = async (task: Omit<TaskReminder, 'id' | 'createdAt'>): Promise<void> => {
+  console.log('addTaskRecord called with:', task);
+  console.log('WEB_APP_URL:', WEB_APP_URL);
+  
   if (!isGoogleAppsScriptConfigured()) {
+    console.error('Google Apps Script Web App URL not configured');
     throw new Error('Google Apps Script Web App URL ยังไม่ได้ตั้งค่า');
   }
 
@@ -93,12 +123,18 @@ export const addTaskRecord = async (task: Omit<TaskReminder, 'id' | 'createdAt'>
       completed: task.completed
     };
 
+    console.log('Sending task data:', taskData);
+
     const params = new URLSearchParams({
       action: 'addTask',
       data: JSON.stringify(taskData)
     });
     
-    await fetchWithJsonp(`${WEB_APP_URL}?${params.toString()}`);
+    const url = `${WEB_APP_URL}?${params.toString()}`;
+    console.log('Request URL:', url);
+    
+    const result = await fetchWithJsonp(url);
+    console.log('Response from Google Apps Script:', result);
     console.log('Task added successfully via Google Apps Script');
   } catch (error) {
     console.error('Error adding task:', error);
