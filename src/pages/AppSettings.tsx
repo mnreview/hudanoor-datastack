@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/hooks/use-toast";
+import { useSettings } from "@/hooks/use-settings";
 import { 
   Settings as SettingsIcon, 
   Store, 
@@ -14,106 +14,62 @@ import {
   FileText, 
   Save,
   Check,
-  RotateCcw
+  RotateCcw,
+  Loader2
 } from "lucide-react";
 
-interface AppSettingsData {
-  id: string;
-  storeName: string;
-  websiteName: string;
-  storeSlogan?: string;
-  primaryColor: string;
-  storeAddress?: string;
-  storePhone?: string;
-  storeEmail?: string;
-  currency: string;
-  dateFormat: string;
-  defaultSalesTarget: number;
-}
-
-const defaultSettings: AppSettingsData = {
-  id: "1",
-  storeName: "HUDANOOR",
-  websiteName: "ระบบบันทึกรายรับ-รายจ่าย",
-  storeSlogan: "เสื้อผ้าแฟชั่นมุสลิม",
-  primaryColor: "#e11d48",
-  storeAddress: "",
-  storePhone: "",
-  storeEmail: "",
-  currency: "THB",
-  dateFormat: "DD/MM/YYYY",
-  defaultSalesTarget: 15000
-};
+const colorOptions = [
+  { name: "Rose", value: "#e11d48" },
+  { name: "Pink", value: "#ec4899" },
+  { name: "Purple", value: "#a855f7" },
+  { name: "Blue", value: "#3b82f6" },
+  { name: "Green", value: "#10b981" },
+  { name: "Orange", value: "#f97316" },
+  { name: "Red", value: "#ef4444" }
+];
 
 export function AppSettings() {
-  const [settings, setSettings] = useState<AppSettingsData>(defaultSettings);
-  const [isSaving, setIsSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const { settings, isLoading, saveSettings, isSaving } = useSettings();
+  const [localSettings, setLocalSettings] = useState(settings);
 
-  // โหลดการตั้งค่าจาก localStorage เมื่อเริ่มต้น
-  useEffect(() => {
-    const savedSettings = localStorage.getItem('hudanoor-settings');
-    if (savedSettings) {
-      try {
-        const parsedSettings = JSON.parse(savedSettings);
-        setSettings({ ...defaultSettings, ...parsedSettings });
-        
-        // แสดงเวลาบันทึกล่าสุด
-        if (parsedSettings.updatedAt) {
-          const lastSavedDate = new Date(parsedSettings.updatedAt);
-          setLastSaved(lastSavedDate.toLocaleString('th-TH'));
-        }
-      } catch (error) {
-        console.error("Error loading settings:", error);
-      }
-    }
-  }, []);
+  // อัพเดต localSettings เมื่อ settings จาก server เปลี่ยน
+  React.useEffect(() => {
+    setLocalSettings(settings);
+  }, [settings]);
 
-  const handleSaveSettings = async () => {
-    setIsSaving(true);
-    
-    try {
-      // จำลองการบันทึกข้อมูล (ในอนาคตจะเชื่อมต่อกับ API หรือ localStorage)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // บันทึกลง localStorage สำหรับตอนนี้
-      const settingsWithTimestamp = {
-        ...settings,
-        updatedAt: new Date().toISOString()
-      };
-      localStorage.setItem('hudanoor-settings', JSON.stringify(settingsWithTimestamp));
-      setLastSaved(new Date().toLocaleString('th-TH'));
-      
-      toast({
-        title: "บันทึกการตั้งค่าสำเร็จ",
-        description: "การตั้งค่าของคุณได้รับการบันทึกแล้ว",
-        duration: 3000,
-      });
-      
-      console.log("Settings saved:", settingsWithTimestamp);
-    } catch (error) {
-      toast({
-        title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถบันทึกการตั้งค่าได้ กรุณาลองใหม่อีกครั้ง",
-        variant: "destructive",
-        duration: 3000,
-      });
-      console.error("Error saving settings:", error);
-    } finally {
-      setIsSaving(false);
-    }
+  const handleSaveSettings = () => {
+    saveSettings(localSettings);
   };
 
   const handleResetSettings = () => {
-    setSettings(defaultSettings);
-    setLastSaved(null);
-    localStorage.removeItem('hudanoor-settings');
-    toast({
-      title: "รีเซ็ตการตั้งค่าสำเร็จ",
-      description: "การตั้งค่าได้กลับไปเป็นค่าเริ่มต้นแล้ว",
-      duration: 3000,
-    });
+    // รีเซ็ตเป็นค่าเริ่มต้น
+    const defaultSettings = {
+      storeName: "HUDANOOR",
+      websiteName: "ระบบบันทึกรายรับ-รายจ่าย",
+      storeSlogan: "เสื้อผ้าแฟชั่นมุสลิม",
+      primaryColor: "#e11d48",
+      storeAddress: "",
+      storePhone: "",
+      storeEmail: "",
+      currency: "THB",
+      dateFormat: "DD/MM/YYYY",
+      defaultSalesTarget: 15000
+    };
+    
+    setLocalSettings({ ...localSettings, ...defaultSettings });
+    saveSettings(defaultSettings);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">กำลังโหลดการตั้งค่า...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -126,10 +82,10 @@ export function AppSettings() {
             <p className="text-muted-foreground mt-1">
               ปรับแต่งระบบให้เหมาะสมกับการใช้งานของคุณ
             </p>
-            {lastSaved && (
+            {settings.updatedAt && (
               <p className="text-sm text-green-600 dark:text-green-400 mt-1">
                 <Check className="h-3 w-3 inline mr-1" />
-                บันทึกล่าสุด: {lastSaved}
+                บันทึกล่าสุด: {new Date(settings.updatedAt).toLocaleString('th-TH')}
               </p>
             )}
           </div>
@@ -188,16 +144,16 @@ export function AppSettings() {
                   <Label htmlFor="storeName">ชื่อร้าน</Label>
                   <Input
                     id="storeName"
-                    value={settings.storeName}
-                    onChange={(e) => setSettings({...settings, storeName: e.target.value})}
+                    value={localSettings.storeName}
+                    onChange={(e) => setLocalSettings({...localSettings, storeName: e.target.value})}
                   />
                 </div>
                 <div>
                   <Label htmlFor="websiteName">ชื่อเว็บไซต์</Label>
                   <Input
                     id="websiteName"
-                    value={settings.websiteName}
-                    onChange={(e) => setSettings({...settings, websiteName: e.target.value})}
+                    value={localSettings.websiteName}
+                    onChange={(e) => setLocalSettings({...localSettings, websiteName: e.target.value})}
                   />
                 </div>
               </div>
@@ -206,8 +162,8 @@ export function AppSettings() {
                 <Label htmlFor="storeSlogan">สโลแกนร้าน</Label>
                 <Input
                   id="storeSlogan"
-                  value={settings.storeSlogan || ""}
-                  onChange={(e) => setSettings({...settings, storeSlogan: e.target.value})}
+                  value={localSettings.storeSlogan || ""}
+                  onChange={(e) => setLocalSettings({...localSettings, storeSlogan: e.target.value})}
                   placeholder="เช่น เสื้อผ้าแฟชั่นมุสลิม"
                 />
               </div>
@@ -216,8 +172,8 @@ export function AppSettings() {
                 <Label htmlFor="storeAddress">ที่อยู่ร้าน</Label>
                 <Textarea
                   id="storeAddress"
-                  value={settings.storeAddress || ""}
-                  onChange={(e) => setSettings({...settings, storeAddress: e.target.value})}
+                  value={localSettings.storeAddress || ""}
+                  onChange={(e) => setLocalSettings({...localSettings, storeAddress: e.target.value})}
                   rows={3}
                 />
               </div>
@@ -227,8 +183,8 @@ export function AppSettings() {
                   <Label htmlFor="storePhone">เบอร์โทรศัพท์</Label>
                   <Input
                     id="storePhone"
-                    value={settings.storePhone || ""}
-                    onChange={(e) => setSettings({...settings, storePhone: e.target.value})}
+                    value={localSettings.storePhone || ""}
+                    onChange={(e) => setLocalSettings({...localSettings, storePhone: e.target.value})}
                   />
                 </div>
                 <div>
@@ -236,8 +192,8 @@ export function AppSettings() {
                   <Input
                     id="storeEmail"
                     type="email"
-                    value={settings.storeEmail || ""}
-                    onChange={(e) => setSettings({...settings, storeEmail: e.target.value})}
+                    value={localSettings.storeEmail || ""}
+                    onChange={(e) => setLocalSettings({...localSettings, storeEmail: e.target.value})}
                   />
                 </div>
               </div>
@@ -260,24 +216,16 @@ export function AppSettings() {
               <div>
                 <Label>สีหลักของระบบ</Label>
                 <div className="grid grid-cols-7 gap-2 mt-2">
-                  {[
-                    { name: "Rose", value: "#e11d48" },
-                    { name: "Pink", value: "#ec4899" },
-                    { name: "Purple", value: "#a855f7" },
-                    { name: "Blue", value: "#3b82f6" },
-                    { name: "Green", value: "#10b981" },
-                    { name: "Orange", value: "#f97316" },
-                    { name: "Red", value: "#ef4444" }
-                  ].map((color) => (
+                  {colorOptions.map((color) => (
                     <button
                       key={color.value}
                       className={`w-12 h-12 rounded-lg border-2 ${
-                        settings.primaryColor === color.value 
+                        localSettings.primaryColor === color.value 
                           ? 'border-gray-900 dark:border-white' 
                           : 'border-gray-200 dark:border-gray-700'
                       }`}
                       style={{ backgroundColor: color.value }}
-                      onClick={() => setSettings({...settings, primaryColor: color.value})}
+                      onClick={() => setLocalSettings({...localSettings, primaryColor: color.value})}
                       title={color.name}
                     />
                   ))}
@@ -302,7 +250,7 @@ export function AppSettings() {
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="currency">สกุลเงิน</Label>
-                  <Select value={settings.currency} onValueChange={(value) => setSettings({...settings, currency: value})}>
+                  <Select value={localSettings.currency} onValueChange={(value) => setLocalSettings({...localSettings, currency: value})}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -315,7 +263,7 @@ export function AppSettings() {
                 </div>
                 <div>
                   <Label htmlFor="dateFormat">รูปแบบวันที่</Label>
-                  <Select value={settings.dateFormat} onValueChange={(value) => setSettings({...settings, dateFormat: value})}>
+                  <Select value={localSettings.dateFormat} onValueChange={(value) => setLocalSettings({...localSettings, dateFormat: value})}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -331,8 +279,8 @@ export function AppSettings() {
                   <Input
                     id="defaultSalesTarget"
                     type="number"
-                    value={settings.defaultSalesTarget}
-                    onChange={(e) => setSettings({...settings, defaultSalesTarget: Number(e.target.value)})}
+                    value={localSettings.defaultSalesTarget}
+                    onChange={(e) => setLocalSettings({...localSettings, defaultSalesTarget: Number(e.target.value)})}
                   />
                 </div>
               </div>

@@ -26,7 +26,57 @@ import {
 
 const mockUpdateLogs: UpdateLog[] = [
   {
+    id: "0",
+    version: "1.2.5",
+    date: "2024-12-08",
+    title: "แก้ไขปัญหาการเลือกรูปแบบวันที่ในหน้าการตั้งค่า",
+    description: "แก้ไขบัคที่ทำให้ไม่สามารถเปลี่ยนรูปแบบวันที่ได้ เนื่องจากใช้ state variable ผิดตัว (settings แทน localSettings)",
+    type: "bugfix",
+    isImportant: false,
+    createdAt: "2024-12-08T19:00:00Z"
+  },
+  {
     id: "1",
+    version: "1.2.4",
+    date: "2024-12-08",
+    title: "แก้ไขปัญหา React Hook ในหน้าการตั้งค่า",
+    description: "แก้ไขการใช้ useState แทน useEffect ที่ทำให้เกิด error ในการอัปเดต localSettings เมื่อ settings เปลี่ยนแปลง",
+    type: "bugfix",
+    isImportant: false,
+    createdAt: "2024-12-08T18:00:00Z"
+  },
+  {
+    id: "2",
+    version: "1.2.3",
+    date: "2024-12-08",
+    title: "แก้ไขปัญหาการแก้ไขสโลแกนร้านในหน้าการตั้งค่า",
+    description: "แก้ไขบัคที่ทำให้ไม่สามารถแก้ไขสโลแกนร้านได้ในหน้าการตั้งค่า เนื่องจากใช้ state ผิดตัวแปร",
+    type: "bugfix",
+    isImportant: false,
+    createdAt: "2024-12-08T17:00:00Z"
+  },
+  {
+    id: "3",
+    version: "1.2.2",
+    date: "2024-12-08",
+    title: "เชื่อมต่อหน้าการตั้งค่ากับ Settings API",
+    description: "อัปเดตหน้าการตั้งค่าให้ใช้งาน useSettings hook และเชื่อมต่อกับ Settings API สำหรับการบันทึกและโหลดการตั้งค่าจริง",
+    type: "improvement",
+    isImportant: false,
+    createdAt: "2024-12-08T16:00:00Z"
+  },
+  {
+    id: "4",
+    version: "1.2.1",
+    date: "2024-12-08",
+    title: "เพิ่มระบบจัดการการตั้งค่าแบบ Hybrid",
+    description: "เพิ่ม Settings API ที่รองรับการบันทึกข้อมูลทั้งใน Google Sheets และ localStorage พร้อม fallback mechanism เพื่อให้ระบบทำงานได้แม้ไม่มีการเชื่อมต่อ Google Apps Script",
+    type: "improvement",
+    isImportant: false,
+    createdAt: "2024-12-08T15:30:00Z"
+  },
+  {
+    id: "5",
     version: "1.2.0",
     date: "2024-12-08",
     title: "เพิ่มระบบจัดการพนักงานและการตั้งค่า",
@@ -36,7 +86,7 @@ const mockUpdateLogs: UpdateLog[] = [
     createdAt: "2024-12-08T10:00:00Z"
   },
   {
-    id: "2", 
+    id: "6", 
     version: "1.1.5",
     date: "2024-12-05",
     title: "แก้ไขปัญหาการแสดงผลกราฟ",
@@ -46,7 +96,7 @@ const mockUpdateLogs: UpdateLog[] = [
     createdAt: "2024-12-05T14:30:00Z"
   },
   {
-    id: "3",
+    id: "7",
     version: "1.1.4", 
     date: "2024-12-01",
     title: "ปรับปรุงประสิทธิภาพการโหลดข้อมูล",
