@@ -62,11 +62,10 @@ const parseTaskData = (rows: any[][]): TaskReminder[] => {
   }));
 };
 
-// Read tasks data from Google Apps Script
+// Read tasks data from Google Apps Script using JSONP
 export const getTasksData = async (): Promise<TaskReminder[]> => {
   if (!isGoogleAppsScriptConfigured()) {
-    // Return empty array if not configured
-    return [];
+    throw new Error('Google Apps Script Web App URL ยังไม่ได้ตั้งค่า');
   }
 
   try {
@@ -74,12 +73,11 @@ export const getTasksData = async (): Promise<TaskReminder[]> => {
     return parseTaskData(data.values || []);
   } catch (error) {
     console.error('Error fetching tasks data:', error);
-    // Return empty array on error instead of throwing
-    return [];
+    throw error;
   }
 };
 
-// Add new task
+// Add new task record to Google Sheets
 export const addTaskRecord = async (task: Omit<TaskReminder, 'id' | 'createdAt'>): Promise<void> => {
   if (!isGoogleAppsScriptConfigured()) {
     throw new Error('Google Apps Script Web App URL ยังไม่ได้ตั้งค่า');
